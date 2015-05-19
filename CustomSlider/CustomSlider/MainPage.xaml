@@ -1,0 +1,71 @@
+﻿<Page
+    x:Class="CustomSlider.MainPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:CustomSlider"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d"
+    Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+
+
+    <Grid>
+        <Grid Background="Black" Margin="30,0" VerticalAlignment="Center">
+                <Grid Height="100" x:Name="CustomSliderControl">
+                    <Grid.Resources>
+                        <Style TargetType="Grid" x:Name="HandleStyle">
+                            <Setter Property="Height" Value="40" />
+                            <Setter Property="Width" Value="40" />
+                            <Setter Property="Background" Value="White" />
+                            <Setter Property="RenderTransformOrigin" Value="0.5,0.5" />
+                        </Style>
+                        <Style TargetType="TextBlock" x:Name="HandleTextStyle">
+                            <Setter Property="Foreground" Value="DimGray" />
+                            <Setter Property="FontSize" Value="20" />
+                            <Setter Property="TextAlignment" Value="Center" />
+                            <Setter Property="HorizontalAlignment" Value="Center" />
+                            <Setter Property="VerticalAlignment" Value="Center" />
+                            <Setter Property="IsHitTestVisible" Value="False" />
+                        </Style>
+                    </Grid.Resources>
+
+                    <Rectangle x:Name="Track" Grid.Column="0" Grid.ColumnSpan="3" Height="10" Fill="DimGray" />
+                    <Canvas Height="10" Background="AliceBlue" HorizontalAlignment="Center">
+                        <Rectangle x:Name="FillTrackGrid" RadiusX="10" RadiusY="10" Height="10" Fill="#FFE89192" >
+                            <!--<Rectangle x:Name="" RenderTransformOrigin ="0.5,0.5"  Height="10" Width="320" Fill="#FFE89192"/>-->
+                            <Rectangle.RenderTransform>
+                                <CompositeTransform TranslateX="-150"/>
+                            </Rectangle.RenderTransform>
+                        </Rectangle>
+                        <!--Width="{Binding DeltaValue}" Canvas.Left="{Binding Min}"
+                       Height="{Binding DeltaValue}"  Width="{Binding DeltaValue}"-->
+                    </Canvas>
+                    
+                    <Grid x:Name="LeftHandle" Style="{StaticResource HandleStyle}" Grid.ColumnSpan="3"
+              ManipulationMode="TranslateX" 
+              ManipulationDelta="LeftHandle_ManipulationDelta" ManipulationCompleted="LefHandleCompleted" Width="40" Margin="0" Height="40">
+                        <Grid.Background>
+                            <ImageBrush Stretch="Fill" ImageSource="Assets/scrubber_control_normal.png"/>
+                        </Grid.Background>
+                        <Grid.RenderTransform>
+                            <CompositeTransform TranslateX="-150"/>
+                        </Grid.RenderTransform>
+                        <TextBlock x:Name="LeftHandleText" Text="0"
+                       Style="{StaticResource HandleTextStyle}" />
+                    </Grid>
+                    <Grid x:Name="RightHandle" Style="{StaticResource HandleStyle}" Grid.ColumnSpan="3"
+              ManipulationMode="TranslateX" 
+              ManipulationDelta="RightHandle_ManipulationDelta" ManipulationCompleted="RightHandleCompleted" RenderTransformOrigin="0.5,0.5" Width="40" Height="40">
+                        <Grid.Background>
+                            <ImageBrush Stretch="Fill" ImageSource="Assets/scrubber_control_normal.png"/>
+                        </Grid.Background>
+                        <Grid.RenderTransform>
+                            <CompositeTransform TranslateX="-150"/>
+                        </Grid.RenderTransform>
+                        <TextBlock x:Name="RightHandleText" Text="0"
+                       Style="{StaticResource HandleTextStyle}" />
+                    </Grid>
+                </Grid>
+            </Grid>            
+    </Grid>
+</Page>
