@@ -33,6 +33,9 @@ namespace CustomSlider
 
         Point initalPoint = new Point(0,0);
 
+        int thumb1Pos = 0;
+        int thumb2Pos = 0;
+
 
         public MainPage()
         {
@@ -78,7 +81,7 @@ namespace CustomSlider
             // this event is handled for you.
         }
         
-
+        //Changes left thumb
         private void LeftHandle_ManipulationDelta(object sender, ManipulationDeltaRoutedEventArgs e)
         {
             var t = (sender as Grid).RenderTransform as CompositeTransform;
@@ -101,6 +104,7 @@ namespace CustomSlider
             FillTrackGrid.Width = FillTrack(rightPoint, leftPoint);
         }
 
+        //Changes right thumb
         private void RightHandle_ManipulationDelta(object sender, ManipulationDeltaRoutedEventArgs e)
         {
             var t = (sender as Grid).RenderTransform as CompositeTransform;
@@ -149,11 +153,6 @@ namespace CustomSlider
 
         public double FillTrack(Point A, Point B)
         {
-            //SliderManager sm = SliderManager.Instance;
-
-            //sm.DeltaValue = Math.Abs(right) + Math.Abs(left);
-
-            //return Math.Abs(right) + Math.Abs(left);
 
             double a = A.X - B.X;
             double b = A.Y - B.Y;
