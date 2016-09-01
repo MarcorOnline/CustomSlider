@@ -7,4 +7,4 @@ Range slider control with two thumbs for Windows Runtime applications:
 - Windows 8.1
 - Windows 10 UWP (Windows 10 and Windows 10 Mobile)
 
-[Preview](RangeSliderWindowsPreview.png)
+[Preview](RangeSliderWindowsPreview.png?raw=true "Preview")
