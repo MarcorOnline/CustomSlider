@@ -33,13 +33,10 @@ namespace CustomSlider.Controls
         private static void OnRangeLimitsChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
             var control = d as RangeSlider;
-
-            control.min = control.Min;
-            control.max = control.Max;
-
-            if (control.min >= control.max)
-                throw new Exception("RangeSlider: 'Min' and 'Max' values must be different and 'Min' must be lower than 'Max'");
             
+            if (control.Min >= control.Max)
+                throw new Exception(string.Format("RangeSlider: 'Min' and 'Max' values must be different and 'Min' must be lower than 'Max'. {0} is greater or equal than {1}", control.Min, control.Max));
+                        
             control.Draw();
         }
 
@@ -64,18 +61,13 @@ namespace CustomSlider.Controls
         private static void OnValueChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
             var control = d as RangeSlider;
-
-            control.leftValue = control.Value1;
-            control.rightValue = control.Value2;
-
-            if (control.leftValue > control.rightValue)
-                throw new Exception("RangeSlider: 'Value1' must be lower or equal than 'Value2'");
             
+            if (control.Value1 > control.Value2)
+                throw new Exception(string.Format("RangeSlider: 'Value1' must be lower or equal than 'Value2'. {0} is greater than {1}", control.Value1, control.Value2));
+            
+            if (control.leftValue != control.Value1 || control.rightValue != control.Value2)
             control.Draw();
         }
-
-        private int min;
-        private int max;
 
         private int leftValue;
         private int rightValue;
@@ -94,12 +86,7 @@ namespace CustomSlider.Controls
         public RangeSlider()
         {
             this.DefaultStyleKey = typeof(RangeSlider);
-
-            min = Min;
-            max = Max;
-            leftValue = Value1;
-            rightValue = Value2;
-
+            
             this.SizeChanged += RangeSlider_SizeChanged;
 
             this.Loaded += RangeSlider_Loaded;
@@ -153,11 +140,14 @@ namespace CustomSlider.Controls
             if (FillTrackGrid == null || LeftHandleText == null || RightHandleText == null || FillTrackGrid.ActualWidth == 0)
                 return;
 
-            if (leftValue < min)
-                throw new Exception(string.Format("RangeSlider: 'Value1' must be greater or equal than 'Min'. {0} is lower than {1}", leftValue, min));
+            leftValue = Value1;
+            rightValue = Value2;
 
-            if (rightValue > max)
-                throw new Exception(string.Format("RangeSlider: 'Value2' must be lower or equal than 'Max'. {0} is greater than {1}", rightValue, max));
+            if (leftValue < Min)
+                throw new Exception(string.Format("RangeSlider: 'Value1' must be greater or equal than 'Min'. {0} is lower than {1}", leftValue, Min));
+
+            if (rightValue > Max)
+                throw new Exception(string.Format("RangeSlider: 'Value2' must be lower or equal than 'Max'. {0} is greater than {1}", rightValue, Max));
 
             //LEFT
             var pos = SetPosition(leftValue);
@@ -179,6 +169,7 @@ namespace CustomSlider.Controls
             var translate = Translate(leftTransform, e.Delta.Translation.X, true);
             leftTransform.TranslateX = translate;
             leftValue = CalculateValue(translate);
+            Value1 = leftValue;
             LeftHandleText.Text = leftValue.ToString();
 
             FillTrack();
@@ -190,6 +181,7 @@ namespace CustomSlider.Controls
             var translate = Translate(rightTransform, e.Delta.Translation.X, false);
             rightTransform.TranslateX = translate;
             rightValue = CalculateValue(translate);
+            Value2 = rightValue;
             RightHandleText.Text = rightValue.ToString();
 
             FillTrack();
@@ -213,12 +205,15 @@ namespace CustomSlider.Controls
 
         private int CalculateValue(double xTranslation)
         {
+            var max = Max;
+            var min = Min;
+
             var valueRange = max - min;
             var uiRange = Track.ActualWidth;
 
             var value = (xTranslation + uiRange / 2) * valueRange / uiRange;
 
-            var rounded = (int)Math.Round(value, 0) + 1;
+            var rounded = (int)Math.Round(value, 0) + min;
 
             if (rounded > max)
                 return max;
@@ -230,10 +225,12 @@ namespace CustomSlider.Controls
 
         public double SetPosition(int value)
         {
-            var valueRange = max - min;
+            var min = Min;
+
+            var valueRange = Max - min;
             var uiRange = Track.ActualWidth;
 
-            var uiPosition = value * uiRange / valueRange;
+            var uiPosition = (value - min) * uiRange / valueRange;
 
             return uiPosition - (uiRange / 2);
         }

@@ -7,9 +7,17 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:controls="using:CustomSlider.Controls"
     mc:Ignorable="d"
-    Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
-    
+    Background="{ThemeResource ApplicationPageBackgroundThemeBrush}"
+    RequestedTheme="Light">
+
     <Grid Background="White">
-        <controls:RangeSlider Min="1" Max="100" Value1="10" Value2="60" />
+        <StackPanel VerticalAlignment="Center">
+            <controls:RangeSlider x:Name="Range" Min="10" Max="100" Value1="30" Value2="90" />
+
+            <Button Content="Try change Min" Click="Button_Click" HorizontalAlignment="Stretch" />
+            <Button Content="Try change Max" Click="Button_Click_1" HorizontalAlignment="Stretch"/>
+            <Button Content="Try change Value1" Click="Button_Click_2" HorizontalAlignment="Stretch"/>
+            <Button Content="Try change Value2" Click="Button_Click_3" HorizontalAlignment="Stretch"/>
+        </StackPanel>
     </Grid>
 </Page>
