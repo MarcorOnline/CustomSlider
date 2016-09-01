@@ -1,0 +1,79 @@
+﻿<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" 
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:local="using:CustomSlider.Themes"
+    xmlns:controls="using:CustomSlider.Controls">
+
+    <Style TargetType="controls:RangeSlider">
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="controls:RangeSlider">
+                    <Grid Height="100">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <Grid.Resources>
+                            <Style TargetType="Grid" x:Key="HandleStyle">
+                                <Setter Property="Height" Value="40" />
+                                <Setter Property="Width" Value="40" />
+                                <Setter Property="Background" Value="White" />
+                                <Setter Property="RenderTransformOrigin" Value="0.5,0.5" />
+                                <Setter Property="Width" Value="16" />
+                                <Setter Property="Height" Value="32" />
+                                <Setter Property="Background" Value="Black" />
+                            </Style>
+                            <Style TargetType="TextBlock" x:Key="HandleTextStyle">
+                                <Setter Property="Foreground" Value="DimGray" />
+                                <Setter Property="FontSize" Value="20" />
+                                <Setter Property="TextAlignment" Value="Center" />
+                                <Setter Property="HorizontalAlignment" Value="Center" />
+                                <Setter Property="VerticalAlignment" Value="Center" />
+                                <Setter Property="IsHitTestVisible" Value="False" />
+                                <Setter Property="Width" Value="50" />
+                            </Style>
+                        </Grid.Resources>
+
+                        <!--LEFT VALUE-->
+                        <TextBlock x:Name="LeftHandleText" 
+                       Style="{StaticResource HandleTextStyle}" />
+
+                        <!--RIGHT VALUE-->
+                        <TextBlock Grid.Column="2" x:Name="RightHandleText" Text="0" 
+                       Style="{StaticResource HandleTextStyle}" />
+
+                        <Grid Grid.Column="1">
+                            <Rectangle x:Name="Track" Height="10" Fill="#a8adb0" />
+
+                            <Rectangle x:Name="FillTrackGrid" Height="10" Width="100" Fill="Blue"
+                       HorizontalAlignment="Center" RenderTransformOrigin="0.5,0.5" >
+                                <Rectangle.RenderTransform>
+                                    <CompositeTransform TranslateX="80" />
+                                </Rectangle.RenderTransform>
+                            </Rectangle>
+
+                            <!--LEFT HANDLE-->
+                            <Grid x:Name="LeftHandle" Style="{StaticResource HandleStyle}" 
+                                  ManipulationMode="TranslateX" >
+                                <Grid.RenderTransform>
+                                    <CompositeTransform TranslateX="30" />
+                                </Grid.RenderTransform>
+                            </Grid>
+
+                            <!--RIGHT HANDLE-->
+                            <Grid x:Name="RightHandle" Style="{StaticResource HandleStyle}" 
+                                  ManipulationMode="TranslateX" >
+                                <Grid.RenderTransform>
+                                    <CompositeTransform TranslateX="130" />
+                                </Grid.RenderTransform>
+                            </Grid>
+                        </Grid>
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+</ResourceDictionary>
