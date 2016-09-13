@@ -9,6 +9,8 @@ namespace CustomSlider.Controls
 {
     public class RangeSlider : Control
     {
+        private bool loaded = true;
+
         private const int defaultMin = 1;
         private const int defaultMax = 100;
 
@@ -19,7 +21,7 @@ namespace CustomSlider.Controls
         }
 
         public static readonly DependencyProperty MinProperty =
-            DependencyProperty.RegisterAttached("Min", typeof(int), typeof(RangeSlider), new PropertyMetadata(defaultMin, OnRangeLimitsChanged));
+            DependencyProperty.RegisterAttached("Min", typeof(int), typeof(RangeSlider), new PropertyMetadata(defaultMin, OnMinChanged));
 
         public int Max
         {
@@ -28,15 +30,19 @@ namespace CustomSlider.Controls
         }
 
         public static readonly DependencyProperty MaxProperty =
-            DependencyProperty.RegisterAttached("Max", typeof(int), typeof(RangeSlider), new PropertyMetadata(defaultMax, OnRangeLimitsChanged));
+            DependencyProperty.RegisterAttached("Max", typeof(int), typeof(RangeSlider), new PropertyMetadata(defaultMax, OnMaxChanged));
 
-        private static void OnRangeLimitsChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        private static void OnMinChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
             var control = d as RangeSlider;
-            
-            if (control.Min >= control.Max)
-                throw new Exception(string.Format("RangeSlider: 'Min' and 'Max' values must be different and 'Min' must be lower than 'Max'. {0} is greater or equal than {1}", control.Min, control.Max));
-                        
+            control.min = (int)e.NewValue;
+            control.Draw();
+        }
+
+        private static void OnMaxChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+            var control = d as RangeSlider;
+            control.max = (int)e.NewValue;
             control.Draw();
         }
 
@@ -47,7 +53,7 @@ namespace CustomSlider.Controls
         }
 
         public static readonly DependencyProperty Value1Property =
-            DependencyProperty.RegisterAttached("Value1", typeof(int), typeof(RangeSlider), new PropertyMetadata(defaultMin, OnValueChanged));
+            DependencyProperty.RegisterAttached("Value1", typeof(int), typeof(RangeSlider), new PropertyMetadata(defaultMin, OnValue1Changed));
 
         public int Value2
         {
@@ -56,21 +62,34 @@ namespace CustomSlider.Controls
         }
 
         public static readonly DependencyProperty Value2Property =
-            DependencyProperty.RegisterAttached("Value2", typeof(int), typeof(RangeSlider), new PropertyMetadata(defaultMax, OnValueChanged));
-        
-        private static void OnValueChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+            DependencyProperty.RegisterAttached("Value2", typeof(int), typeof(RangeSlider), new PropertyMetadata(defaultMax, OnValue2Changed));
+
+        private static void OnValue1Changed(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
             var control = d as RangeSlider;
-            
-            if (control.Value1 > control.Value2)
-                throw new Exception(string.Format("RangeSlider: 'Value1' must be lower or equal than 'Value2'. {0} is greater than {1}", control.Value1, control.Value2));
-            
-            if (control.leftValue != control.Value1 || control.rightValue != control.Value2)
-            control.Draw();
+
+            if (control.leftValue != (int)e.NewValue)
+            {
+                control.leftValue = (int)e.NewValue;
+                control.Draw();
+            }
         }
 
-        private int leftValue;
-        private int rightValue;
+        private static void OnValue2Changed(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+            var control = d as RangeSlider;
+
+            if (control.rightValue != (int)e.NewValue)
+            {
+                control.rightValue = (int)e.NewValue;
+                control.Draw();
+            }
+        }
+
+        private int? min;
+        private int? max;
+        private int? leftValue;
+        private int? rightValue;
 
         private CompositeTransform leftTransform;
         private CompositeTransform rightTransform;
@@ -86,7 +105,7 @@ namespace CustomSlider.Controls
         public RangeSlider()
         {
             this.DefaultStyleKey = typeof(RangeSlider);
-            
+
             this.SizeChanged += RangeSlider_SizeChanged;
 
             this.Loaded += RangeSlider_Loaded;
@@ -99,30 +118,48 @@ namespace CustomSlider.Controls
 
             //get ui elements from template
             LeftHandle = (Grid)GetTemplateChild("LeftHandle");
+            LeftHandle.ManipulationMode = ManipulationModes.TranslateX;
+
             RightHandle = (Grid)GetTemplateChild("RightHandle");
+            RightHandle.ManipulationMode = ManipulationModes.TranslateX;
+
             Track = (Rectangle)GetTemplateChild("Track");
             FillTrackGrid = (Rectangle)GetTemplateChild("FillTrackGrid");
             LeftHandleText = (TextBlock)GetTemplateChild("LeftHandleText");
             RightHandleText = (TextBlock)GetTemplateChild("RightHandleText");
 
             leftTransform = LeftHandle.RenderTransform as CompositeTransform;
+            if (leftTransform == null)
+                LeftHandle.RenderTransform = leftTransform = new CompositeTransform();
+
             rightTransform = RightHandle.RenderTransform as CompositeTransform;
+            if (rightTransform == null)
+                RightHandle.RenderTransform = rightTransform = new CompositeTransform();
+
             fillTransform = FillTrackGrid.RenderTransform as CompositeTransform;
+            if (fillTransform == null)
+                FillTrackGrid.RenderTransform = fillTransform = new CompositeTransform();
 
             Draw();
         }
 
-        private void RangeSlider_Loaded(object sender, Windows.UI.Xaml.RoutedEventArgs e)
+        private void RangeSlider_Loaded(object sender, RoutedEventArgs e)
         {
+            loaded = true;
+
             if (LeftHandle == null || RightHandle == null)
                 return;
 
             LeftHandle.ManipulationDelta += LeftHandle_ManipulationDelta;
             RightHandle.ManipulationDelta += RightHandle_ManipulationDelta;
+
+            Draw();
         }
 
-        private void RangeSlider_Unloaded(object sender, Windows.UI.Xaml.RoutedEventArgs e)
+        private void RangeSlider_Unloaded(object sender, RoutedEventArgs e)
         {
+            loaded = false;
+
             if (LeftHandle == null || RightHandle == null)
                 return;
 
@@ -130,37 +167,66 @@ namespace CustomSlider.Controls
             RightHandle.ManipulationDelta -= RightHandle_ManipulationDelta;
         }
 
-        private void RangeSlider_SizeChanged(object sender, Windows.UI.Xaml.SizeChangedEventArgs e)
+        private void RangeSlider_SizeChanged(object sender, SizeChangedEventArgs e)
         {
             Draw();
         }
 
+        private bool CheckValuesIntegrity()
+        {
+            //apply default values if necessary
+            if (!leftValue.HasValue)
+                leftValue = Value1;
+
+            if (!rightValue.HasValue)
+                rightValue = Value2;
+
+            if (!min.HasValue)
+                min = Min;
+
+            if (!max.HasValue)
+                max = Max;
+
+            //check integrity
+            if (leftValue < min)
+                if (!Windows.ApplicationModel.DesignMode.DesignModeEnabled)
+                    throw new Exception(string.Format("RangeSlider: 'Value1' must be greater or equal than 'Min'. {0} is lower than {1}", leftValue, Min));
+
+            if (rightValue > max)
+                if (!Windows.ApplicationModel.DesignMode.DesignModeEnabled)
+                    throw new Exception(string.Format("RangeSlider: 'Value2' must be lower or equal than 'Max'. {0} is greater than {1}", rightValue, Max));
+
+            if (min >= max)
+                if (!Windows.ApplicationModel.DesignMode.DesignModeEnabled)
+                    throw new Exception(string.Format("RangeSlider: 'Min' and 'Max' values must be different and 'Min' must be lower than 'Max'. {0} is greater or equal than {1}", Min, Max));
+
+            if (leftValue > rightValue)
+                if (!Windows.ApplicationModel.DesignMode.DesignModeEnabled)
+                    throw new Exception(string.Format("RangeSlider: 'Value1' must be lower or equal than 'Value2'. {0} is greater than {1}", leftValue, rightValue));
+
+            return true;
+        }
+
         private void Draw()
         {
-            if (FillTrackGrid == null || LeftHandleText == null || RightHandleText == null || FillTrackGrid.ActualWidth == 0)
+            if (!loaded || FillTrackGrid == null || LeftHandleText == null || RightHandleText == null || FillTrackGrid.ActualWidth == 0)
                 return;
 
-            leftValue = Value1;
-            rightValue = Value2;
+            if (CheckValuesIntegrity())
+            {
+                //LEFT
+                var pos = SetPosition(leftValue.Value);
+                leftTransform.TranslateX = pos;
+                LeftHandleText.Text = leftValue.ToString();
 
-            if (leftValue < Min)
-                throw new Exception(string.Format("RangeSlider: 'Value1' must be greater or equal than 'Min'. {0} is lower than {1}", leftValue, Min));
+                //RIGHT
+                pos = SetPosition(rightValue.Value);
+                rightTransform.TranslateX = pos;
+                RightHandleText.Text = rightValue.ToString();
 
-            if (rightValue > Max)
-                throw new Exception(string.Format("RangeSlider: 'Value2' must be lower or equal than 'Max'. {0} is greater than {1}", rightValue, Max));
-
-            //LEFT
-            var pos = SetPosition(leftValue);
-            leftTransform.TranslateX = pos;
-            LeftHandleText.Text = leftValue.ToString();
-
-            //RIGHT
-            pos = SetPosition(rightValue);
-            rightTransform.TranslateX = pos;
-            RightHandleText.Text = rightValue.ToString();
-
-            //FILL
-            FillTrack();
+                //FILL
+                FillTrack();
+            }
         }
 
         //Changes left thumb
@@ -168,8 +234,8 @@ namespace CustomSlider.Controls
         {
             var translate = Translate(leftTransform, e.Delta.Translation.X, true);
             leftTransform.TranslateX = translate;
-            leftValue = CalculateValue(translate);
-            Value1 = leftValue;
+            leftValue = CalculateValue(translate);      //apply to leftValue to not call Redraw when Value1 is set
+            Value1 = leftValue.Value;
             LeftHandleText.Text = leftValue.ToString();
 
             FillTrack();
@@ -180,8 +246,8 @@ namespace CustomSlider.Controls
         {
             var translate = Translate(rightTransform, e.Delta.Translation.X, false);
             rightTransform.TranslateX = translate;
-            rightValue = CalculateValue(translate);
-            Value2 = rightValue;
+            rightValue = CalculateValue(translate);     //apply to rightValue to not call Redraw when Value2 is set
+            Value2 = rightValue.Value;
             RightHandleText.Text = rightValue.ToString();
 
             FillTrack();
@@ -205,32 +271,27 @@ namespace CustomSlider.Controls
 
         private int CalculateValue(double xTranslation)
         {
-            var max = Max;
-            var min = Min;
-
-            var valueRange = max - min;
+            var valueRange = max.Value - min.Value;
             var uiRange = Track.ActualWidth;
 
             var value = (xTranslation + uiRange / 2) * valueRange / uiRange;
 
-            var rounded = (int)Math.Round(value, 0) + min;
+            var rounded = (int)Math.Round(value, 0) + min.Value;
 
             if (rounded > max)
-                return max;
+                return max.Value;
             if (rounded < min)
-                return min;
+                return min.Value;
 
             return rounded;
         }
 
         public double SetPosition(int value)
         {
-            var min = Min;
-
-            var valueRange = Max - min;
+            var valueRange = max.Value - min.Value;
             var uiRange = Track.ActualWidth;
 
-            var uiPosition = (value - min) * uiRange / valueRange;
+            var uiPosition = (value - min.Value) * uiRange / valueRange;
 
             return uiPosition - (uiRange / 2);
         }
