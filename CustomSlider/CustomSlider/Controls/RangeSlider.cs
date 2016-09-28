@@ -140,7 +140,53 @@ namespace CustomSlider.Controls
             if (fillTransform == null)
                 FillTrackGrid.RenderTransform = fillTransform = new CompositeTransform();
 
+            Track.PointerPressed += Track_PointerPressed;
+            FillTrackGrid.PointerPressed += FillTrackGrid_PointerPressed;
+
             Draw();
+        }
+
+        private Tuple<double, double> FindNearest(PointerRoutedEventArgs e)
+        {
+            var p = e.GetCurrentPoint(Track);
+           // Debug.WriteLine(p.Position.X);
+
+            //find the nearest
+
+            var uiMiddleRange = Track.ActualWidth / 2;
+
+            var ldist = Math.Abs(p.Position.X - uiMiddleRange - leftTransform.TranslateX);
+            var rdist = Math.Abs(p.Position.X - uiMiddleRange - rightTransform.TranslateX);
+
+            return new Tuple<double, double>(ldist, rdist);
+        }
+
+        private void FillTrackGrid_PointerPressed(object sender, PointerRoutedEventArgs e)
+        {
+            var dis = FindNearest(e);
+
+            if (dis.Item1 < dis.Item2)
+            {
+                TranslateAndApply(leftTransform, dis.Item1, true);
+            }
+            else
+            {
+                TranslateAndApply(rightTransform, -dis.Item2, false);
+            }
+        }
+
+        private void Track_PointerPressed(object sender, PointerRoutedEventArgs e)
+        {
+            var dis = FindNearest(e);
+
+            if (dis.Item1 < dis.Item2)
+            {
+                TranslateAndApply(leftTransform, -dis.Item1, true);
+            }
+            else
+            {
+                TranslateAndApply(rightTransform, dis.Item2, false);
+            }
         }
 
         private void RangeSlider_Loaded(object sender, RoutedEventArgs e)
@@ -229,35 +275,44 @@ namespace CustomSlider.Controls
             }
         }
 
+        private void TranslateAndApply(CompositeTransform s, double deltaTranslateX, bool left)
+        {
+            var translate = CalculateTranslation(s, deltaTranslateX, left);
+            s.TranslateX = translate;
+
+            if (left)
+            {
+                leftValue = CalculateValue(translate);      //apply to leftValue to not call Redraw when Value1 is set
+                Value1 = leftValue.Value;
+                LeftHandleText.Text = leftValue.ToString();
+            }
+            else
+            {
+                rightValue = CalculateValue(translate);      //apply to rightValue to not call Redraw when Value2 is set
+                Value2 = rightValue.Value;
+                RightHandleText.Text = rightValue.ToString();
+            }
+
+            FillTrack();
+        }
+
         //Changes left thumb
         private void LeftHandle_ManipulationDelta(object sender, ManipulationDeltaRoutedEventArgs e)
         {
-            var translate = Translate(leftTransform, e.Delta.Translation.X, true);
-            leftTransform.TranslateX = translate;
-            leftValue = CalculateValue(translate);      //apply to leftValue to not call Redraw when Value1 is set
-            Value1 = leftValue.Value;
-            LeftHandleText.Text = leftValue.ToString();
-
-            FillTrack();
+            TranslateAndApply(leftTransform, e.Delta.Translation.X, true);
         }
 
         //Changes right thumb
         private void RightHandle_ManipulationDelta(object sender, ManipulationDeltaRoutedEventArgs e)
         {
-            var translate = Translate(rightTransform, e.Delta.Translation.X, false);
-            rightTransform.TranslateX = translate;
-            rightValue = CalculateValue(translate);     //apply to rightValue to not call Redraw when Value2 is set
-            Value2 = rightValue.Value;
-            RightHandleText.Text = rightValue.ToString();
-
-            FillTrack();
+            TranslateAndApply(rightTransform, e.Delta.Translation.X, false);
         }
 
-        private double Translate(CompositeTransform s, double deltaTranslateX, bool left)
+        private double CalculateTranslation(CompositeTransform s, double deltaTranslateX, bool left)
         {
             var uiRange = Track.ActualWidth;
-            var minimum = left ? -uiRange / 2 : leftTransform.TranslateX;
-            var maximum = left ? rightTransform.TranslateX : uiRange / 2;
+            var minimum = left ? -uiRange / 2 : (leftTransform.TranslateX + 20);
+            var maximum = left ? (rightTransform.TranslateX - 20) : uiRange / 2;
 
             var target = s.TranslateX + deltaTranslateX;
 
